@@ -3,7 +3,7 @@ import { Meteor } from "meteor/meteor";
 import { EventEmitter } from "events";
 
 
-const hooksEmitter = new EventEmitter();
+const hooksEmitter = new EventEmitter({ captureRejections: true });
 const insertAsync = Mongo.Collection.prototype.insertAsync;
 const updateAsync = Mongo.Collection.prototype.updateAsync;
 const removeAsync = Mongo.Collection.prototype.removeAsync;
@@ -145,5 +145,10 @@ Object.assign(Mongo.Collection.prototype, {
     }
 
     hooksEmitter.on(`${this._name}::remove`, cb);
-  }
+  },
+});
+
+hooksEmitter.on("error", (err) => {
+  console.error("Hooks emitter error");
+  console.error(err);
 });
