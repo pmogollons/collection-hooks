@@ -158,3 +158,11 @@ hooksEmitter.on("error", (err) => {
   console.error("Hooks emitter error");
   console.error(err);
 });
+
+export const CollectionHooks = {
+  onError(callback) {
+    if (typeof callback === "function") {
+      hooksEmitter.on("error", callback);
+    }
+  }
+};
