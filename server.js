@@ -33,11 +33,7 @@ Object.assign(Mongo.Collection.prototype, {
       return res;
     }
 
-    const doc = await this.createQuery({
-      $filters: { _id: res },
-
-      ...(this._insertDocFields || { $all: true }),
-    }).fetchOneAsync();
+    const doc = await this._fetchHookDoc({ _id: res }, this._insertDocFields, options);
 
     const hookParams = {
       userId: Meteor.userId(),
@@ -56,12 +52,7 @@ Object.assign(Mongo.Collection.prototype, {
     let previousDocs = [];
 
     if (this._fetchPrevious) {
-      previousDocs = await this.createQuery({
-        $filters: query,
-
-        _id: true,
-        ...(this._updateDocFields || { $all: true }),
-      }).fetchAsync();
+      previousDocs = await this._fetchHookDocs(query, this._updateDocFields, options);
     }
 
     const res = await updateAsync.call(this, query, params, options);
@@ -71,12 +62,7 @@ Object.assign(Mongo.Collection.prototype, {
       removedCount: res,
     };
 
-    const docs = await this.createQuery({
-      $filters: query,
-
-      _id: true,
-      ...(this._updateDocFields || { $all: true }),
-    }).fetchAsync();
+    const docs = await this._fetchHookDocs(query, this._updateDocFields, options);
 
     docs.forEach((doc) => {
       const previousDoc = previousDocs.find((previousDoc) => previousDoc._id === doc._id);
@@ -91,12 +77,7 @@ Object.assign(Mongo.Collection.prototype, {
       return await removeAsync.call(this, params, options);
     }
 
-    const docs = await this.createQuery({
-      $filters: params,
-
-      _id: true,
-      ...(this._removeDocFields || { $all: true }),
-    }).fetchAsync();
+    const docs = await this._fetchHookDocs(params, this._removeDocFields, options);
 
     const res = await removeAsync.call(this, params, options);
 
@@ -146,6 +127,31 @@ Object.assign(Mongo.Collection.prototype, {
 
     hooksEmitter.on(`${this._name}::remove`, cb);
   },
+
+  async _fetchHookDoc(query, fields, options) {
+    if (this.createQuery) {
+      return await this.createQuery({
+        $filters: query,
+
+        _id: true,
+        ...(fields || { $all: true }),
+      }, { session: options?.session }).fetchOneAsync();
+    }
+
+    return this.findOneAsync(query, { projection: fields }, options);
+  },
+  async _fetchHookDocs(query, fields, options) {
+    if (this.createQuery) {
+      return await this.createQuery({
+        $filters: query,
+
+        _id: true,
+        ...(fields || { $all: true }),
+      }, { session: options?.session }).fetchAsync();
+    }
+
+    return this.find(query, { projection: fields }, options).fetchAsync();
+  }
 });
 
 hooksEmitter.on("error", (err) => {
