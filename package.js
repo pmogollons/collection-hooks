@@ -16,7 +16,6 @@ Package.onUse(function (api) {
     "typescript",
     "ecmascript",
     "mongo",
-    'zodern:types',
   ]);
 
   api.mainModule("server.js", "server");
@@ -29,7 +28,6 @@ Package.onTest(function (api) {
     "typescript",
     "ecmascript",
     "mongo",
-    'zodern:types',
   ]);
 
   api.use(["meteortesting:mocha"]);
