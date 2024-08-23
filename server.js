@@ -59,7 +59,7 @@ Object.assign(Mongo.Collection.prototype, {
 
     const hookParams = {
       userId: Meteor.userId(),
-      removedCount: res,
+      updatedCount: res,
     };
 
     const docs = await this._fetchHookDocs(query, this._updateDocFields, options);
