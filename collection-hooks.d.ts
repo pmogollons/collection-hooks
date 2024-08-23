@@ -1,3 +1,5 @@
+/* eslint no-unused-vars: 0 */
+
 declare module "meteor/pmogollons:collection-hooks" {
   interface CollectionHooks {
     onError: (callback: (error: Error) => void) => void;

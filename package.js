@@ -1,6 +1,3 @@
-/* global Npm: true */
-/* global Package: true */
-
 Package.describe({
   name: "pmogollons:collection-hooks",
   version: "1.0.1",
