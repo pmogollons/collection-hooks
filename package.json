@@ -1,0 +1,12 @@
+{
+  "name": "collection-hooks",
+  "version": "1.0.1",
+  "description": "Extends Mongo.Collection with onInsert, onUpdate and onRemove hooks.",
+  "main": "package.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "pmogollons",
+  "license": "ISC"
+}
