@@ -151,7 +151,7 @@ Object.assign(Mongo.Collection.prototype, {
     }
 
     return this.find(query, { projection: fields }, options).fetchAsync();
-  }
+  },
 });
 
 hooksEmitter.on("error", (err) => {
@@ -164,5 +164,5 @@ export const CollectionHooks = {
     if (typeof callback === "function") {
       hooksEmitter.on("error", callback);
     }
-  }
+  },
 };
