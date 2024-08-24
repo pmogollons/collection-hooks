@@ -23,10 +23,11 @@ Package.onTest(function (api) {
   api.use("pmogollons:collection-hooks");
 
   api.use([
+    "tinytest",
     "typescript",
     "ecmascript",
     "mongo",
   ]);
 
-  api.use(["meteortesting:mocha"]);
+  api.mainModule("tests.js", "server");
 });
