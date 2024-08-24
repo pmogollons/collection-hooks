@@ -9,9 +9,9 @@ const updateAsync = Mongo.Collection.prototype.updateAsync;
 const removeAsync = Mongo.Collection.prototype.removeAsync;
 
 Object.assign(Mongo.Collection.prototype, {
-  _insertDocFields: { $all: true },
-  _updateDocFields: { $all: true },
-  _removeDocFields: { $all: true },
+  _insertDocFields: {},
+  _updateDocFields: {},
+  _removeDocFields: {},
   _fetchPrevious: false,
   _onBeforeInsert: null,
   _hasInsertHooks: false,
@@ -100,7 +100,7 @@ Object.assign(Mongo.Collection.prototype, {
     this._hasInsertHooks = true;
 
     if (options?.docFields) {
-      this._insertDocFields = options.docFields;
+      this._insertDocFields = Object.assign({ _id: true }, this._insertDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::insert`, cb);
@@ -109,7 +109,7 @@ Object.assign(Mongo.Collection.prototype, {
     this._hasUpdateHooks = true;
 
     if (options?.docFields) {
-      this._updateDocFields = options.docFields;
+      this._updateDocFields = Object.assign({ _id: true }, this._updateDocFields || {}, options.docFields);
     }
 
     if (options?.fetchPrevious) {
@@ -122,7 +122,7 @@ Object.assign(Mongo.Collection.prototype, {
     this._hasRemoveHooks = true;
 
     if (options?.docFields) {
-      this._removeDocFields = options.docFields;
+      this._removeDocFields = Object.assign({ _id: true }, this._removeDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::remove`, cb);
