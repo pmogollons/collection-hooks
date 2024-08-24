@@ -36,7 +36,7 @@ Object.assign(Mongo.Collection.prototype, {
     const doc = await this._fetchHookDoc({ _id: res }, this._insertDocFields, options);
 
     const hookParams = {
-      userId: Meteor.userId(),
+      userId: this._getUserId(), // TODO: This might not work outside of methods
       doc,
     };
 
@@ -58,7 +58,7 @@ Object.assign(Mongo.Collection.prototype, {
     const res = await updateAsync.call(this, query, params, options);
 
     const hookParams = {
-      userId: Meteor.userId(),
+      userId: this._getUserId(), // TODO: This might not work outside of methods
       updatedCount: res,
     };
 
@@ -82,7 +82,7 @@ Object.assign(Mongo.Collection.prototype, {
     const res = await removeAsync.call(this, params, options);
 
     const hookParams = {
-      userId: Meteor.userId(),
+      userId: this._getUserId(), // TODO: This might not work outside of methods
       removedCount: res,
     };
 
@@ -151,6 +151,13 @@ Object.assign(Mongo.Collection.prototype, {
     }
 
     return this.find(query, { projection: fields }, options).fetchAsync();
+  },
+  _getUserId() {
+    try {
+      return Meteor.userId();
+    } catch {
+      return undefined;
+    }
   },
 });
 
