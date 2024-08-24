@@ -57,15 +57,9 @@ Collection.onRemove(function ({ userId, doc }) {
 ### onBeforeInsert
 
 ```javascript
-Collection.onInsert(function ({ userId, doc }) {
+Collection.onBeforeInsert(function ({ userId, doc }) {
   // Code here runs before the insert operation has completed. Any changes to the doc are persisted in the db.
   // You can throw here to cancel the op
-}, {
-  // You can set the doc fields the hook will receive. If not set, it will return all fields.
-  docFields: {
-    field1: 1,
-    field2: 1
-  }
 });
 ```
 
