@@ -1,6 +1,6 @@
 {
   "name": "collection-hooks",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Extends Mongo.Collection with onInsert, onUpdate and onRemove hooks.",
   "scripts": {
     "test": "meteor test-packages ./ --driver-package test-in-browser",
