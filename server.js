@@ -13,9 +13,9 @@ const config = {
   _removeDocFields: {},
   _fetchPrevious: false,
   _onBeforeInsert: [],
-  _hasInsertHooks: false,
-  _hasUpdateHooks: false,
-  _hasRemoveHooks: false,
+};
+
+Object.assign(Mongo.Collection.prototype, {
   ...config,
 
   async insertAsync(params, options) {
@@ -36,7 +36,7 @@ const config = {
 
     const res = await insertAsync.call(this, params, options);
 
-    if (!this._hasInsertHooks) {
+    if (!hooksEmitter.listenerCount(`${this._name}::insert`)) {
       return res;
     }
 
@@ -47,12 +47,16 @@ const config = {
       doc,
     };
 
-    hooksEmitter.emit(`${this._name}::insert`, { ...hookParams });
+    try {
+      hooksEmitter.emit(`${this._name}::insert`, hookParams);
+    } catch (error) {
+      hooksEmitter.emit("error", error);
+    }
 
     return res;
   },
   async updateAsync(query, params, options) {
-    if (options?.skipHooks || !this._hasUpdateHooks) {
+    if (options?.skipHooks || !hooksEmitter.listenerCount(`${this._name}::update`)) {
       return await updateAsync.call(this, query, params, options);
     }
 
@@ -74,13 +78,17 @@ const config = {
     docs.forEach((doc) => {
       const previousDoc = previousDocs.find((previousDoc) => previousDoc._id === doc._id);
 
-      hooksEmitter.emit(`${this._name}::update`, { ...hookParams, doc, previousDoc });
+      try {
+        hooksEmitter.emit(`${this._name}::update`, { ...hookParams, doc, previousDoc });
+      } catch (error) {
+        hooksEmitter.emit("error", error);
+      }
     });
 
     return res;
   },
   async removeAsync(params, options) {
-    if (options?.skipHooks || !this._hasRemoveHooks) {
+    if (options?.skipHooks || !hooksEmitter.listenerCount(`${this._name}::remove`)) {
       return await removeAsync.call(this, params, options);
     }
 
@@ -94,7 +102,11 @@ const config = {
     };
 
     docs.forEach((doc) => {
-      hooksEmitter.emit(`${this._name}::remove`, { ...hookParams, doc });
+      try {
+        hooksEmitter.emit(`${this._name}::remove`, { ...hookParams, doc });
+      } catch (error) {
+        hooksEmitter.emit("error", error);
+      }
     });
 
     return res;
@@ -103,19 +115,18 @@ const config = {
   onBeforeInsert(cb) {
     this._onBeforeInsert.push(cb);
 
+    return () => this._onBeforeInsert.splice(this._onBeforeInsert.length - 1, 1);
   },
   onInsert(cb, options) {
-    this._hasInsertHooks = true;
-
     if (options?.docFields) {
       this._insertDocFields = Object.assign({ _id: true }, this._insertDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::insert`, cb);
+
+    return () => hooksEmitter.removeListener(`${this._name}::insert`, cb);
   },
   onUpdate(cb, options) {
-    this._hasUpdateHooks = true;
-
     if (options?.docFields) {
       this._updateDocFields = Object.assign({ _id: true }, this._updateDocFields || {}, options.docFields);
     }
@@ -125,15 +136,17 @@ const config = {
     }
 
     hooksEmitter.on(`${this._name}::update`, cb);
+
+    return () => hooksEmitter.removeListener(`${this._name}::update`, cb);
   },
   onRemove(cb, options) {
-    this._hasRemoveHooks = true;
-
     if (options?.docFields) {
       this._removeDocFields = Object.assign({ _id: true }, this._removeDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::remove`, cb);
+
+    return () => hooksEmitter.removeListener(`${this._name}::remove`, cb);
   },
 
   async _fetchHookDoc(query, fields, options) {
@@ -175,9 +188,14 @@ hooksEmitter.on("error", (err) => {
 });
 
 export const CollectionHooks = {
+  _hooksEmitter: hooksEmitter,
   onError(callback) {
     if (typeof callback === "function") {
       hooksEmitter.on("error", callback);
+
+      return () => hooksEmitter.removeListener("error", callback);
     }
+
+    return undefined;
   },
 };

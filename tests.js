@@ -1,6 +1,8 @@
 import { Mongo } from "meteor/mongo";
 import { Tinytest } from "meteor/tinytest";
 
+import { CollectionHooks } from "./server";
+
 
 const CODE = 111;
 
@@ -8,7 +10,7 @@ const getCode = async () => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve(CODE);
-    }, 500);
+    }, 50);
   });
 };
 
@@ -16,8 +18,13 @@ const getCode = async () => {
 Tinytest.addAsync("CollectionHooks - onBeforeInsert async hook is called", async function (test) {
   const TestCollection = new Mongo.Collection(null);
 
-  TestCollection.onBeforeInsert(async ({ doc }) => {
+  const removeListener = TestCollection.onBeforeInsert(async ({ doc }) => {
     doc.code = await getCode();
+    test.equal(doc.name, "Test Document");
+  });
+
+  const removeListener2 = TestCollection.onBeforeInsert(async ({ doc }) => {
+    doc.miaw = "miaw";
     test.equal(doc.name, "Test Document");
   });
 
@@ -25,6 +32,10 @@ Tinytest.addAsync("CollectionHooks - onBeforeInsert async hook is called", async
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
   test.equal(CODE, doc.code);
+  test.equal("miaw", doc.miaw);
+
+  removeListener();
+  removeListener2();
 });
 
 Tinytest.addAsync("CollectionHooks - onInsert hook is called", async function (test) {
@@ -150,4 +161,46 @@ Tinytest.addAsync("CollectionHooks - onRemove hook is called with docFields", as
   test.equal(hookDoc._id, docId);
   test.equal(hookDoc.name, undefined);
   test.equal(doc, undefined);
+});
+
+Tinytest.addAsync("CollectionHooks - onError global async hook is called", async function (test) {
+  const TestCollection = new Mongo.Collection(null);
+
+  const removeListener = TestCollection.onInsert(async () => {
+    throw new Error("Test Error");
+  });
+
+  const removeListener2 = CollectionHooks.onError((error) => {
+    test.equal(error.message, "Test Error");
+  });
+
+  const docId = await TestCollection.insertAsync({ name: "Test Document" });
+  const doc = await TestCollection.findOneAsync({ _id: docId });
+
+  test.equal(doc._id, docId);
+  test.equal(doc.name, "Test Document");
+
+  removeListener();
+  removeListener2();
+});
+
+Tinytest.addAsync("CollectionHooks - onError global sync hook is called", async function (test) {
+  const TestCollection = new Mongo.Collection(null);
+
+  const removeListener = TestCollection.onInsert(() => {
+    throw new Error("Test Error");
+  });
+
+  const removeListener2 = CollectionHooks.onError((error) => {
+    test.equal(error.message, "Test Error");
+  });
+
+  const docId = await TestCollection.insertAsync({ name: "Test Document" });
+  const doc = await TestCollection.findOneAsync({ _id: docId });
+
+  test.equal(doc._id, docId);
+  test.equal(doc.name, "Test Document");
+
+  removeListener();
+  removeListener2();
 });
