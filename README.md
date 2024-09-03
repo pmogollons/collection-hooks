@@ -13,7 +13,7 @@ affecting the operation.
 ### onInsert
 
 ```javascript
-Collection.onInsert(function ({ userId, doc }) {
+const removeOnInsert = Collection.onInsert(function ({ userId, doc }) {
     // Code here run after the insert operation has completed
 }, {
   // You can set the doc fields the hook will receive. If not set, it will return all fields.
@@ -22,12 +22,15 @@ Collection.onInsert(function ({ userId, doc }) {
     field2: 1
   }
 });
+
+// You can remove the hook with the returned function
+removeOnInsert();
 ```
 
 ### onUpdate
 
 ```javascript
-Collection.onUpdate(function ({ userId, doc, previousDoc }) {
+const removeOnUpdate = Collection.onUpdate(function ({ userId, doc, previousDoc }) {
     // Code here run after the update operation has completed
 }, {
   // You can set the doc fields the hook will receive. If not set, it will return all fields.
@@ -38,12 +41,15 @@ Collection.onUpdate(function ({ userId, doc, previousDoc }) {
   // If set to true, the hook will receive the previous document
   fetchPrevious: true
 });
+
+// You can remove the hook with the returned function
+removeOnUpdate();
 ```
 
 ### onRemove
 
 ```javascript
-Collection.onRemove(function ({ userId, doc }) {
+const removeOnRemove = Collection.onRemove(function ({ userId, doc }) {
     // Code here run after the remove operation has completed
 }, {
   // You can set the doc fields the hook will receive. If not set, it will return all fields.
@@ -52,15 +58,21 @@ Collection.onRemove(function ({ userId, doc }) {
     field2: 1
   }
 });
+
+// You can remove the hook with the returned function
+removeOnRemove();
 ```
 
 ### onBeforeInsert
 
 ```javascript
-Collection.onBeforeInsert(function ({ userId, doc }) {
+const removeOnBeforeInsert = Collection.onBeforeInsert(function ({ userId, doc }) {
   // Code here runs before the insert operation has completed. Any changes to the doc are persisted in the db.
   // You can throw here to cancel the op
 });
+
+// You can remove the hook with the returned function
+removeOnBeforeInsert();
 ```
 
 ### Direct access (circumventing hooks)
@@ -69,6 +81,25 @@ Collection.onBeforeInsert(function ({ userId, doc }) {
 Collection.insertAsync(doc, { skipHooks: true });
 Collection.updateAsync(query, mod, { skipHooks: true });
 Collection.removeAsync(query, { skipHooks: true });
+```
+
+### Error handling on hooks (except onBeforeInsert)
+
+Errors thrown inside any hook are caught and emitted as a global event that you can listen to.
+
+```javascript
+CollectionHooks.onError((err) => {
+  // Do something with the error
+  console.error("Error on hook", err);
+});
+```
+
+### Hooks emitter
+
+You can access the emitter directly. Is not recommended to use it unless you know what you are doing.
+
+```javascript
+CollectionHooks._hooksEmitter;
 ```
 
 ### Why only onBeforeInsert?
