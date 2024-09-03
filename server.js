@@ -7,24 +7,31 @@ const hooksEmitter = new EventEmitter({ captureRejections: true });
 const insertAsync = Mongo.Collection.prototype.insertAsync;
 const updateAsync = Mongo.Collection.prototype.updateAsync;
 const removeAsync = Mongo.Collection.prototype.removeAsync;
-
-Object.assign(Mongo.Collection.prototype, {
+const config = {
   _insertDocFields: {},
   _updateDocFields: {},
   _removeDocFields: {},
   _fetchPrevious: false,
-  _onBeforeInsert: null,
+  _onBeforeInsert: [],
   _hasInsertHooks: false,
   _hasUpdateHooks: false,
   _hasRemoveHooks: false,
+  ...config,
 
   async insertAsync(params, options) {
     if (options?.skipHooks) {
       return await insertAsync.call(this, params, options);
     }
 
-    if (this._onBeforeInsert) {
-      await this._onBeforeInsert({ doc: params });
+    if (this._onBeforeInsert?.length > 0) {
+      const hookParams = {
+        userId: this._getUserId(),
+        doc: params,
+      };
+
+      for (const cb of this._onBeforeInsert) {
+        await cb(hookParams);
+      }
     }
 
     const res = await insertAsync.call(this, params, options);
@@ -93,8 +100,9 @@ Object.assign(Mongo.Collection.prototype, {
     return res;
   },
 
-  async onBeforeInsert(cb) {
-    this._onBeforeInsert = cb;
+  onBeforeInsert(cb) {
+    this._onBeforeInsert.push(cb);
+
   },
   onInsert(cb, options) {
     this._hasInsertHooks = true;
