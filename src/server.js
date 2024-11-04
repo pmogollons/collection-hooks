@@ -59,7 +59,7 @@ Object.assign(Mongo.Collection.prototype, {
     return res;
   },
   async updateAsync(query, params, options) {
-    if (options?.skipHooks || !hooksEmitter.listenerCount(`${this._name}::update`)) {
+    if (options?.skipHooks || (!hooksEmitter.listenerCount(`${this._name}::update`) && !this._onBeforeUpdate?.length)) {
       return await updateAsync.call(this, query, params, options);
     }
 
@@ -86,6 +86,10 @@ Object.assign(Mongo.Collection.prototype, {
     }
 
     const res = await updateAsync.call(this, query, params, options);
+
+    if (!hooksEmitter.listenerCount(`${this._name}::update`)) {
+      return res;
+    }
 
     const hookParams = {
       userId: this._getUserId(),

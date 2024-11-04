@@ -204,3 +204,25 @@ Tinytest.addAsync("CollectionHooks - onError global sync hook is called", async 
   removeListener();
   removeListener2();
 });
+
+Tinytest.addAsync("CollectionHooks - onBeforeUpdate hook is called", async function (test) {
+  const TestCollection = new Mongo.Collection("test");
+
+  const removeListener = TestCollection.onBeforeUpdate(async ({ doc }) => {
+    doc.code = await getCode();
+  }, {
+    fetchPrevious: true,
+  });
+
+  const docId = await TestCollection.insertAsync({ name: "Test Document" });
+  const doc = await TestCollection.findOneAsync({ _id: docId });
+
+  test.isUndefined(doc.code);
+
+  await TestCollection.updateAsync({ _id: docId }, { $set: { name: "Updated Document" } });
+  const doc2 = await TestCollection.findOneAsync({ _id: docId });
+
+  test.equal(CODE, doc2.code);
+
+  removeListener();
+});
