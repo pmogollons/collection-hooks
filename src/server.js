@@ -78,7 +78,7 @@ Object.assign(Mongo.Collection.prototype, {
           doc: params["$set"],
           previousDoc: previousDocs[0],
         };
-  
+
         for (const cb of this._onBeforeUpdate) {
           await cb(hookParams);
         }
