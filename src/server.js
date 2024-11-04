@@ -2,6 +2,8 @@ import { Mongo } from "meteor/mongo";
 import { Meteor } from "meteor/meteor";
 import { EventEmitter } from "events";
 
+import { mergeDeep } from "./lib/mergeDeep";
+
 
 const hooksEmitter = new EventEmitter({ captureRejections: true });
 const insertAsync = Mongo.Collection.prototype.insertAsync;
@@ -13,6 +15,7 @@ const config = {
   _removeDocFields: {},
   _fetchPrevious: false,
   _onBeforeInsert: [],
+  _onBeforeUpdate: [],
 };
 
 Object.assign(Mongo.Collection.prototype, {
@@ -64,6 +67,22 @@ Object.assign(Mongo.Collection.prototype, {
 
     if (this._fetchPrevious) {
       previousDocs = await this._fetchHookDocs(query, this._updateDocFields, options);
+    }
+
+    if (this._onBeforeUpdate?.length > 0) {
+      if (previousDocs.length === 0 || previousDocs.length > 1) {
+        console.warn("We can only run onBeforeUpdate for a single document");
+      } else {
+        const hookParams = {
+          userId: this._getUserId(),
+          doc: params["$set"],
+          previousDoc: previousDocs[0],
+        };
+  
+        for (const cb of this._onBeforeUpdate) {
+          await cb(hookParams);
+        }
+      }
     }
 
     const res = await updateAsync.call(this, query, params, options);
@@ -119,16 +138,29 @@ Object.assign(Mongo.Collection.prototype, {
   },
   onInsert(cb, options) {
     if (options?.docFields) {
-      this._insertDocFields = Object.assign({ _id: true }, this._insertDocFields || {}, options.docFields);
+      this._insertDocFields = mergeDeep({ _id: true }, this._insertDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::insert`, cb);
 
     return () => hooksEmitter.removeListener(`${this._name}::insert`, cb);
   },
+  onBeforeUpdate(cb, options) {
+    if (options?.docFields) {
+      this._updateDocFields = mergeDeep({ _id: true }, this._updateDocFields || {}, options.docFields);
+    }
+
+    if (options?.fetchPrevious) {
+      this._fetchPrevious = options.fetchPrevious;
+    }
+
+    this._onBeforeUpdate.push(cb);
+
+    return () => this._onBeforeUpdate.splice(this._onBeforeUpdate.length - 1, 1);
+  },
   onUpdate(cb, options) {
     if (options?.docFields) {
-      this._updateDocFields = Object.assign({ _id: true }, this._updateDocFields || {}, options.docFields);
+      this._updateDocFields = mergeDeep({ _id: true }, this._updateDocFields || {}, options.docFields);
     }
 
     if (options?.fetchPrevious) {
@@ -141,7 +173,7 @@ Object.assign(Mongo.Collection.prototype, {
   },
   onRemove(cb, options) {
     if (options?.docFields) {
-      this._removeDocFields = Object.assign({ _id: true }, this._removeDocFields || {}, options.docFields);
+      this._removeDocFields = mergeDeep({ _id: true }, this._removeDocFields || {}, options.docFields);
     }
 
     hooksEmitter.on(`${this._name}::remove`, cb);

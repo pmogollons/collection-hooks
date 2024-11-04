@@ -40,6 +40,7 @@ declare module "meteor/mongo" {
       onUpdate(callback: (params: HookParams) => void, options?: HookOptions): void;
       onRemove(callback: (params: HookParams) => void, options?: HookOptions): void;
       onBeforeInsert(callback: (params: HookParams) => void): void;
+      onBeforeUpdate(callback: (params: HookParams) => void): void;
     }
   }
 }

@@ -1,7 +1,7 @@
 import { Mongo } from "meteor/mongo";
 import { Tinytest } from "meteor/tinytest";
 
-import { CollectionHooks } from "./server";
+import { CollectionHooks } from "../src/server";
 
 
 const CODE = 111;

@@ -16,7 +16,7 @@ Package.onUse(function (api) {
     "mongo",
   ]);
 
-  api.mainModule("server.js", "server");
+  api.mainModule("src/server.js", "server");
 });
 
 Package.onTest(function (api) {
@@ -29,5 +29,5 @@ Package.onTest(function (api) {
     "mongo",
   ]);
 
-  api.mainModule("tests.js", "server");
+  api.mainModule("tests/index.js", "server");
 });
