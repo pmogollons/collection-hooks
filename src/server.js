@@ -9,17 +9,14 @@ const hooksEmitter = new EventEmitter({ captureRejections: true });
 const insertAsync = Mongo.Collection.prototype.insertAsync;
 const updateAsync = Mongo.Collection.prototype.updateAsync;
 const removeAsync = Mongo.Collection.prototype.removeAsync;
-const config = {
+
+Object.assign(Mongo.Collection.prototype, {
   _insertDocFields: {},
   _updateDocFields: {},
   _removeDocFields: {},
   _fetchPrevious: false,
-  _onBeforeInsert: [],
-  _onBeforeUpdate: [],
-};
-
-Object.assign(Mongo.Collection.prototype, {
-  ...config,
+  _onBeforeInsert: null,
+  _onBeforeUpdate: null,
 
   async insertAsync(params, options) {
     if (options?.skipHooks) {
@@ -136,6 +133,10 @@ Object.assign(Mongo.Collection.prototype, {
   },
 
   onBeforeInsert(cb) {
+    if (!this._onBeforeInsert) {
+      this._onBeforeInsert = [];
+    }
+
     this._onBeforeInsert.push(cb);
 
     return () => this._onBeforeInsert.splice(this._onBeforeInsert.length - 1, 1);
@@ -150,6 +151,10 @@ Object.assign(Mongo.Collection.prototype, {
     return () => hooksEmitter.removeListener(`${this._name}::insert`, cb);
   },
   onBeforeUpdate(cb, options) {
+    if (!this._onBeforeUpdate) {
+      this._onBeforeUpdate = [];
+    }
+
     if (options?.docFields) {
       this._updateDocFields = mergeDeep({ _id: true }, this._updateDocFields || {}, options.docFields);
     }
