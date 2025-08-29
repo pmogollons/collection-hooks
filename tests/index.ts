@@ -1,4 +1,5 @@
 import { Mongo } from "meteor/mongo";
+// @ts-expect-error - no types for tinytest
 import { Tinytest } from "meteor/tinytest";
 
 import { CollectionHooks } from "../src/server";
@@ -31,8 +32,8 @@ Tinytest.addAsync("CollectionHooks - onBeforeInsert async hook is called", async
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(CODE, doc.code);
-  test.equal("miaw", doc.miaw);
+  test.equal(CODE, doc?.code);
+  test.equal("miaw", doc?.miaw);
 
   removeListener();
   removeListener2();
@@ -40,7 +41,7 @@ Tinytest.addAsync("CollectionHooks - onBeforeInsert async hook is called", async
 
 Tinytest.addAsync("CollectionHooks - onInsert hook is called", async function (test) {
   const TestCollection = new Mongo.Collection(null);
-  let hookDoc = false;
+  let hookDoc;
 
   TestCollection.onInsert(({ doc }) => {
     hookDoc = doc;
@@ -48,13 +49,13 @@ Tinytest.addAsync("CollectionHooks - onInsert hook is called", async function (t
 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
 
-  test.equal(hookDoc.name, "Test Document");
+  test.equal(hookDoc?.name, "Test Document");
   test.isTrue(docId, "Expected document to be inserted and return an ID");
 });
 
 Tinytest.addAsync("CollectionHooks - onInsert hook is called with docFields", async function (test) {
   const TestCollection = new Mongo.Collection(null);
-  let hookDoc = false;
+  let hookDoc;
 
   TestCollection.onInsert(({ doc }) => {
     hookDoc = doc;
@@ -64,14 +65,14 @@ Tinytest.addAsync("CollectionHooks - onInsert hook is called with docFields", as
 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
 
-  test.isTrue(hookDoc._id, docId);
-  test.equal(hookDoc.name, undefined);
+  test.isTrue(hookDoc?._id, docId);
+  test.equal(hookDoc?.name, undefined);
   test.isTrue(docId, "Expected document to be inserted and return an ID");
 });
 
 Tinytest.addAsync("CollectionHooks - onUpdate hook is called", async function (test) {
   const TestCollection = new Mongo.Collection(null);
-  let hookDoc = false;
+  let hookDoc;
 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
 
@@ -81,12 +82,12 @@ Tinytest.addAsync("CollectionHooks - onUpdate hook is called", async function (t
 
   await TestCollection.updateAsync({ _id: docId }, { $set: { name: "Updated Document" } });
 
-  test.equal(hookDoc.name, "Updated Document");
+  test.equal(hookDoc?.name, "Updated Document");
 });
 
 Tinytest.addAsync("CollectionHooks - onUpdate hook is called with docFields", async function (test) {
   const TestCollection = new Mongo.Collection(null);
-  let hookDoc = false;
+  let hookDoc;
 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
 
@@ -98,8 +99,8 @@ Tinytest.addAsync("CollectionHooks - onUpdate hook is called with docFields", as
 
   await TestCollection.updateAsync({ _id: docId }, { $set: { name: "Updated Document" } });
 
-  test.isTrue(hookDoc._id, docId);
-  test.equal(hookDoc.name, undefined);
+  test.isTrue(hookDoc?._id, docId);
+  test.equal(hookDoc?.name, undefined);
 });
 
 Tinytest.addAsync("CollectionHooks - onUpdate hook is called with docFields and previousDoc", async function (test) {
@@ -119,10 +120,10 @@ Tinytest.addAsync("CollectionHooks - onUpdate hook is called with docFields and 
 
   await TestCollection.updateAsync({ _id: docId }, { $set: { name: "Updated Document", miaw: "miaw" } });
 
-  test.equal(hookDoc._id, docId);
-  test.equal(hookDoc.miaw, "miaw");
-  test.equal(hookPreviousDoc._id, docId);
-  test.equal(hookPreviousDoc.miaw, undefined);
+  test.equal(hookDoc?._id, docId);
+  test.equal(hookDoc?.miaw, "miaw");
+  test.equal(hookPreviousDoc?._id, docId);
+  test.equal(hookPreviousDoc?.miaw, undefined);
 });
 
 Tinytest.addAsync("CollectionHooks - onRemove hook is called", async function (test) {
@@ -138,8 +139,8 @@ Tinytest.addAsync("CollectionHooks - onRemove hook is called", async function (t
   await TestCollection.removeAsync({ _id: docId });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(hookDoc._id, docId);
-  test.equal(hookDoc.name, "Test Document");
+  test.equal(hookDoc?._id, docId);
+  test.equal(hookDoc?.name, "Test Document");
   test.equal(doc, undefined);
 });
 
@@ -158,8 +159,8 @@ Tinytest.addAsync("CollectionHooks - onRemove hook is called with docFields", as
   await TestCollection.removeAsync({ _id: docId });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(hookDoc._id, docId);
-  test.equal(hookDoc.name, undefined);
+  test.equal(hookDoc?._id, docId);
+  test.equal(hookDoc?.name, undefined);
   test.equal(doc, undefined);
 });
 
@@ -177,8 +178,8 @@ Tinytest.addAsync("CollectionHooks - onError global async hook is called", async
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(doc._id, docId);
-  test.equal(doc.name, "Test Document");
+  test.equal(doc?._id, docId);
+  test.equal(doc?.name, "Test Document");
 
   removeListener();
   removeListener2();
@@ -198,8 +199,8 @@ Tinytest.addAsync("CollectionHooks - onError global sync hook is called", async 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(doc._id, docId);
-  test.equal(doc.name, "Test Document");
+  test.equal(doc?._id, docId);
+  test.equal(doc?.name, "Test Document");
 
   removeListener();
   removeListener2();
@@ -210,19 +211,17 @@ Tinytest.addAsync("CollectionHooks - onBeforeUpdate hook is called", async funct
 
   const removeListener = TestCollection.onBeforeUpdate(async ({ doc }) => {
     doc.code = await getCode();
-  }, {
-    fetchPrevious: true,
   });
 
   const docId = await TestCollection.insertAsync({ name: "Test Document" });
   const doc = await TestCollection.findOneAsync({ _id: docId });
 
-  test.isUndefined(doc.code);
+  test.isUndefined(doc?.code);
 
   await TestCollection.updateAsync({ _id: docId }, { $set: { name: "Updated Document" } });
   const doc2 = await TestCollection.findOneAsync({ _id: docId });
 
-  test.equal(CODE, doc2.code);
+  test.equal(CODE, doc2?.code);
 
   removeListener();
 });

@@ -29,5 +29,5 @@ Package.onTest(function (api) {
     "mongo",
   ]);
 
-  api.mainModule("tests/index.js", "server");
+  api.mainModule("tests/index.ts", "server");
 });
