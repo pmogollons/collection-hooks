@@ -237,6 +237,6 @@ export const CollectionHooks = {
       return () => hooksEmitter.removeListener("error", callback);
     }
 
-    return undefined;
+    return () => null;
   },
 };
