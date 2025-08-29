@@ -67,7 +67,7 @@ Object.assign(Mongo.Collection.prototype, {
     }
 
     if (this._onBeforeUpdate?.length > 0) {
-      if (previousDocs.length === 0 || previousDocs.length > 1) {
+      if (previousDocs.length > 1) {
         console.warn("We can only run onBeforeUpdate for a single document");
       } else {
         const hookParams = {
