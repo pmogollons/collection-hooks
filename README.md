@@ -80,6 +80,7 @@ removeOnBeforeInsert();
 ```javascript
 Collection.insertAsync(doc, { skipHooks: true });
 Collection.updateAsync(query, mod, { skipHooks: true });
+Collection.upsertAsync(query, mod, { skipHooks: true });
 Collection.removeAsync(query, { skipHooks: true });
 ```
 

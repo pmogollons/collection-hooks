@@ -10,6 +10,16 @@ const insertAsync = Mongo.Collection.prototype.insertAsync;
 const updateAsync = Mongo.Collection.prototype.updateAsync;
 const removeAsync = Mongo.Collection.prototype.removeAsync;
 
+async function emitHooks(eventName, params) {
+  for (const listener of hooksEmitter.rawListeners(eventName)) {
+    try {
+      await listener.call(hooksEmitter, params);
+    } catch (error) {
+      hooksEmitter.emit("error", error);
+    }
+  }
+}
+
 Object.assign(Mongo.Collection.prototype, {
   _insertDocFields: {},
   _updateDocFields: {},
@@ -47,11 +57,7 @@ Object.assign(Mongo.Collection.prototype, {
       doc,
     };
 
-    try {
-      hooksEmitter.emit(`${this._name}::insert`, hookParams);
-    } catch (error) {
-      hooksEmitter.emit("error", error);
-    }
+    await emitHooks(`${this._name}::insert`, hookParams);
 
     return res;
   },
@@ -95,15 +101,11 @@ Object.assign(Mongo.Collection.prototype, {
 
     const docs = await this._fetchHookDocs(query, this._updateDocFields, options);
 
-    docs.forEach((doc) => {
+    for (const doc of docs) {
       const previousDoc = previousDocs.find((previousDoc) => previousDoc._id === doc._id);
 
-      try {
-        hooksEmitter.emit(`${this._name}::update`, { ...hookParams, doc, previousDoc });
-      } catch (error) {
-        hooksEmitter.emit("error", error);
-      }
-    });
+      await emitHooks(`${this._name}::update`, { ...hookParams, doc, previousDoc });
+    }
 
     return res;
   },
@@ -121,13 +123,9 @@ Object.assign(Mongo.Collection.prototype, {
       removedCount: res,
     };
 
-    docs.forEach((doc) => {
-      try {
-        hooksEmitter.emit(`${this._name}::remove`, { ...hookParams, doc });
-      } catch (error) {
-        hooksEmitter.emit("error", error);
-      }
-    });
+    for (const doc of docs) {
+      await emitHooks(`${this._name}::remove`, { ...hookParams, doc });
+    }
 
     return res;
   },
