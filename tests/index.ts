@@ -226,3 +226,34 @@ Tinytest.addAsync("CollectionHooks - onBeforeUpdate hook is called", async funct
 
   removeListener();
 });
+
+Tinytest.addAsync("CollectionHooks - update hooks receive the full modifier", async function (test) {
+  const collection = new Mongo.Collection<{ _id: string; name: string; count: number }>("modifier-hook-test");
+  const docId = await collection.insertAsync({ name: "original", count: 0 });
+  let beforeCalls = 0;
+  let afterCalls = 0;
+  let expectedModifier: Mongo.Modifier<{ _id: string; name: string; count: number }>;
+
+  const removeBefore = collection.onBeforeUpdate(({ modifier }) => {
+    beforeCalls++;
+    test.isTrue(modifier === expectedModifier);
+  });
+  const removeAfter = collection.onUpdate(({ modifier }) => {
+    afterCalls++;
+    test.equal(modifier, expectedModifier);
+  });
+
+  try {
+    expectedModifier = { $set: { name: "updated" }, $inc: { count: 1 } };
+    await collection.updateAsync(docId, expectedModifier);
+    expectedModifier = { $inc: { count: 2 } };
+    await collection.updateAsync(docId, expectedModifier);
+    test.equal(beforeCalls, 2);
+    test.equal(afterCalls, 2);
+    test.equal((await collection.findOneAsync(docId))?.count, 3);
+  } finally {
+    removeBefore();
+    removeAfter();
+    await collection.removeAsync(docId);
+  }
+});

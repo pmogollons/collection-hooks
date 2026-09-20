@@ -79,6 +79,7 @@ Object.assign(Mongo.Collection.prototype, {
         const hookParams = {
           userId: this._getUserId(),
           doc: params["$set"],
+          modifier: params,
           previousDoc: previousDocs[0],
         };
 
@@ -104,7 +105,7 @@ Object.assign(Mongo.Collection.prototype, {
     for (const doc of docs) {
       const previousDoc = previousDocs.find((previousDoc) => previousDoc._id === doc._id);
 
-      await emitHooks(`${this._name}::update`, { ...hookParams, doc, previousDoc });
+      await emitHooks(`${this._name}::update`, { ...hookParams, modifier: params, doc, previousDoc });
     }
 
     return res;

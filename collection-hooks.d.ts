@@ -137,7 +137,9 @@ declare module "meteor/mongo" {
         const TDocFields extends Deps | undefined = undefined,
         const TFetchPrevious extends boolean = false,
       >(
-        callback: (params: HookParams<U, TDocFields, TFetchPrevious>) => void,
+        callback: (
+          params: HookParams<U, TDocFields, TFetchPrevious> & { modifier: NpmModuleMongodb.UpdateFilter<T> },
+        ) => void,
         options?: HookOptions<TDocFields, TFetchPrevious>,
       ): HookRemoveFunction;
       onRemove<const TDocFields extends Deps | undefined = undefined>(
@@ -145,7 +147,9 @@ declare module "meteor/mongo" {
         options?: HookOptions<TDocFields>,
       ): HookRemoveFunction;
       onBeforeInsert(callback: (params: BeforeHookParams<U>) => void): HookRemoveFunction;
-      onBeforeUpdate(callback: (params: BeforeHookParams<U>) => void): HookRemoveFunction;
+      onBeforeUpdate(
+        callback: (params: BeforeHookParams<U> & { modifier: NpmModuleMongodb.UpdateFilter<T> }) => void,
+      ): HookRemoveFunction;
     }
   }
 }

@@ -1,3 +1,4 @@
+import type { NpmModuleMongodb } from "meteor/npm-mongo";
 import { Mongo } from "meteor/mongo";
 
 
@@ -23,12 +24,14 @@ type TestDocument = {
   } | null;
 };
 
+declare const TransformedCollection: Mongo.Collection<{ _id: string; value: number }, { _id: string; value: string }>;
+
 declare const TestCollection: Mongo.Collection<TestDocument, TestDocument>;
 
 // This block is compiled as a type test but never registers runtime hooks.
 if (false) {
   TestCollection.insertAsync(
-    { title: "inserted", omitted: false, nested: { selected: 1, omitted: "nested" }, items: [] },
+    { title: "inserted", omitted: false, nested: { selected: 1, omitted: "nested" }, items: [], nullable: null },
     { skipHooks: true },
   ) satisfies Promise<string>;
 
@@ -91,7 +94,11 @@ if (false) {
   );
 
   TestCollection.onUpdate(
-    ({ doc, previousDoc }) => {
+    ({ doc, previousDoc, modifier }) => {
+      modifier satisfies NpmModuleMongodb.UpdateFilter<TestDocument>;
+      modifier.$set?.omitted satisfies boolean | undefined;
+      // @ts-expect-error Modifier fields retain their stored types.
+      modifier.$set = { omitted: "invalid" };
       doc._id satisfies string;
       previousDoc._id satisfies string;
       previousDoc.title satisfies string;
@@ -114,6 +121,41 @@ if (false) {
     },
     { docFields: { $all: true } },
   );
+
+  TestCollection.onBeforeUpdate(({ modifier }) => {
+    modifier satisfies NpmModuleMongodb.UpdateFilter<TestDocument>;
+    modifier.$set?.title satisfies string | undefined;
+    // @ts-expect-error Modifier fields retain their stored types.
+    modifier.$set = { title: 123 };
+  });
+
+  TransformedCollection.onUpdate(({ doc, modifier }) => {
+    doc.value satisfies string;
+    modifier.$set?.value satisfies number | undefined;
+    // @ts-expect-error Modifiers use the stored document, not its transformation.
+    modifier.$set = { value: "invalid" };
+  });
+
+  TransformedCollection.onBeforeUpdate(({ doc, modifier }) => {
+    doc.value satisfies string | undefined;
+    modifier.$set?.value satisfies number | undefined;
+    modifier.$inc = { value: 1 };
+    // @ts-expect-error Modifiers use the stored document, not its transformation.
+    modifier.$set = { value: "invalid" };
+  });
+
+  TestCollection.onInsert((params) => {
+    // @ts-expect-error Insert hooks do not receive a modifier.
+    void params.modifier;
+  });
+  TestCollection.onBeforeInsert((params) => {
+    // @ts-expect-error Before-insert hooks do not receive a modifier.
+    void params.modifier;
+  });
+  TestCollection.onRemove((params) => {
+    // @ts-expect-error Remove hooks do not receive a modifier.
+    void params.modifier;
+  });
 
   const dynamicDocFields: { [field: string]: boolean } = { title: true };
 
