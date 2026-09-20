@@ -1,10 +1,10 @@
 {
   "name": "collection-hooks",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Extends Mongo.Collection with onInsert, onUpdate and onRemove hooks.",
   "scripts": {
     "test": "meteor test-packages --port 3534 ./ --driver-package test-in-browser",
-    "publish": "meteor publish --release=3.0.2"
+    "publish": "meteor publish --release=3.5.2"
   },
   "author": "pmogollons",
   "license": "ISC",

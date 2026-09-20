@@ -1,6 +1,6 @@
 Package.describe({
   name: "pmogollons:collection-hooks",
-  version: "1.0.8",
+  version: "1.0.9",
   summary: "Collection hooks for Meteor",
   git: "https://github.com/pmogollons/collection-hooks",
   documentation: "README.md",
